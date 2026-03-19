@@ -16,8 +16,11 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo Hello, world!
+- script: 
+- name: Run Snyk Scan
+  run: snyk test --severity-threshold=high
   displayName: 'Run a one-line script'
+  
 
 - script: |
     echo Add other tasks to build, test, and deploy your project.
