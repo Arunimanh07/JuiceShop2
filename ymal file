@@ -1,0 +1,2 @@
+- name: Run Snyk Scan
+  run: snyk test --severity-threshold=high
