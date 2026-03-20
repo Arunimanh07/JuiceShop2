@@ -1,1 +1,28 @@
+# Starter pipeline
+- task: SnykSecurityScan@1
+  inputs:
+    serviceConnectionEndpoint: 'Snyk'
+    testType: 'code'
+    failOnIssues: true
+    projectName: 'Snyk test_azure'
+    organization: 'Snyk test_azure'
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+trigger:
+- develop
 
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- script: 
+- name: Run Snyk Scan
+  run: snyk test --severity-threshold=high
+  displayName: 'Run a one-line script'
+  
+
+- script: |
+    echo Add other tasks to build, test, and deploy your project.
+    echo See https://aka.ms/yaml
+  displayName: 'Run a multi-line script'
