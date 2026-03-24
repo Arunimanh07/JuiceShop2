@@ -30,8 +30,4 @@ steps:
     snyk test --severity-threshold=high
   displayName: 'Run Snyk Test (High Threshold)'
 
-# 🔹 Optional: Monitor project in Snyk dashboard
-- script: |
-    snyk monitor
-  displayName: 'Monitor Project in Snyk'
-  condition: succeededOrFailed()
+
