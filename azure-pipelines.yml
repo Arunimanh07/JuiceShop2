@@ -5,7 +5,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  SNYK_TOKEN: $(SNYK_TOKEN)   # Store this in Azure DevOps Pipeline Secrets
+  SNYK_TOKEN: $(SNYK_TOKEN)   # Stores this in Azure DevOps Pipeline Secrets
 
 steps:
 
