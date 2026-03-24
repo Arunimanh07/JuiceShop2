@@ -5,7 +5,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  SNYK_TOKEN:snyk_cs_TD6if_pkh2B_4_srXlpZBJWcJK2YKywSePjHWhsdcq4__v1
+  SNYK_TOKEN: $(SNYK_TOKEN)   # Store this in Azure DevOps Pipeline Secrets
 
 steps:
 
@@ -22,7 +22,7 @@ steps:
 
 # 🔹 Authenticate Snyk
 - script: |
-    snyk auth:snyk_cs_TD6if_pkh2B_4_srXlpZBJWcJK2YKywSePjHWhsdcq4__v1
+    snyk auth $(SNYK_TOKEN)
   displayName: 'Authenticate with Snyk'
 
 # 🔹 Run Snyk Scan (FAIL if HIGH vulnerabilities exist)
