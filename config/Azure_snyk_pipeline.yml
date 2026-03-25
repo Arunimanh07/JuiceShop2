@@ -1,30 +1,80 @@
 trigger:
 - main
 
+pr:
+- main
+
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+  IMAGE_NAME: 'my-app-image'
+
 steps:
 
-# 🔹 Install Node (required for Snyk CLI)
+# 🔹 Install Node.js
 - task: NodeTool@0
   inputs:
     versionSpec: '18.x'
   displayName: 'Install Node.js'
 
-# 🔹 Install Snyk CLI
+# 🔹 Debug
+- script: ls -la
+  displayName: 'Debug: List files'
+
+# 🔹 Install dependencies
+- script: npm install
+  displayName: 'Install dependencies'
+
+# 🔹 Install frontend dependencies (if exists)
 - script: |
-    npm install -g snyk
-  displayName: 'Install Snyk CLI'
+    if [ -d "frontend" ]; then
+      cd frontend
+      npm install
+      cd ..
+    fi
+  displayName: 'Install frontend dependencies'
 
-# 🔹 Authenticate Snyk
+# 🔹 Build frontend
 - script: |
-    snyk auth $(SNYK_TOKEN)
-  displayName: 'Authenticate with Snyk'
+    npm run build:frontend || echo "Skipping frontend build"
+  displayName: 'Build frontend'
 
-# 🔹 Run Snyk Scan (FAIL if HIGH vulnerabilities exist)
+# 🔹 Build backend
 - script: |
-    snyk test --severity-threshold=high
-  displayName: 'Run Snyk Test (High Threshold)'
+    npm run build:server || echo "Skipping backend build"
+  displayName: 'Build backend'
 
+# 🔹 🔐 SCA Scan (Dependencies)
+- script: |
+    npx snyk test --severity-threshold=high
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
+  displayName: 'Snyk SCA Scan (Fail if High > 0)'
 
+# 🔹 🔍 SAST Scan (Code)
+- script: |
+    npx snyk code test --severity-threshold=high
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
+  displayName: 'Snyk SAST Scan (Fail if High > 0)'
+
+# 🔹 🐳 Build Docker Image
+- script: |
+    docker build -t $(IMAGE_NAME):latest .
+  displayName: 'Build Docker Image'
+
+# 🔹 🐳 Container Scan
+- script: |
+    npx snyk container test $(IMAGE_NAME):latest --severity-threshold=high
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
+  displayName: 'Snyk Container Scan (Fail if High > 0)'
+
+# 🔹 📊 Publish Results to Snyk
+- script: |
+    npx snyk monitor
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
+  displayName: 'Publish Results to Snyk'
+  condition: succeededOrFailed()
