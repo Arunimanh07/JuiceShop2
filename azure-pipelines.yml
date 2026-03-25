@@ -12,6 +12,10 @@ steps:
     versionSpec: '18.x'
   displayName: 'Install Node.js'
 
+- script: |
+    npm install
+  displayName: 'Install project dependencies'
+
 # 🔹 Install Snyk CLI
 - script: |
     npm install -g snyk
