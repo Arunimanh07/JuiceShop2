@@ -1,28 +1,33 @@
-# Starter pipeline
-- task: SnykSecurityScan@1
-  inputs:
-    serviceConnectionEndpoint: 'Snyk'
-    testType: 'code'
-    failOnIssues: true
-    projectName: 'Snyk test_azure'
-    organization: 'Snyk test_azure'
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
 trigger:
-- develop
+- main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
+
+variables:
+  SNYK_TOKEN: $(SNYK_TOKEN)   # Stores this in Azure DevOps Pipeline Secrets
 
 steps:
-- script: 
-- name: Run Snyk Scan
-  run: snyk test --severity-threshold=high
-  displayName: 'Run a one-line script'
-  
 
+# 🔹 Install Node (required for Snyk CLI)
+- task: NodeTool@0
+  inputs:
+    versionSpec: '18.x'
+  displayName: 'Install Node.js'
+
+# 🔹 Install Snyk CLI
 - script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+    npm install -g snyk
+  displayName: 'Install Snyk CLI'
+
+# 🔹 Authenticate Snyk
+- script: |
+    snyk auth $(SNYK_TOKEN)
+  displayName: 'Authenticate with Snyk'
+
+# 🔹 Run Snyk Scan (FAIL if HIGH vulnerabilities exist)
+- script: |
+    snyk test --severity-threshold=high
+  displayName: 'Run Snyk Test (High Threshold)'
+
+
