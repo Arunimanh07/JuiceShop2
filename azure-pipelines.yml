@@ -22,6 +22,19 @@ steps:
     snyk auth $(SNYK_TOKEN)
   displayName: 'Authenticate with Snyk'
 
+- script: |
+    snyk test --severity-threshold=high
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
+  displayName: 'Run Snyk Test (Fail if High > 0)'
+
+# 🔹 Push results to Snyk Console
+- script: |
+    snyk monitor
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
+  displayName: 'Publish Results to Snyk'
+  condition: succeededOrFailed()
 # 🔹 Run Snyk Scan (FAIL if HIGH vulnerabilities exist)
 #- script: |
 #    snyk test --severity-threshold=high
