@@ -47,10 +47,9 @@ steps:
 
 # 🔹 🔐 SCA Scan (Dependencies)
 - script: |
-    npx snyk code test --org=40f7c43d-cfe9-4ea9-8927-b679655746c5 --severity-threshold=high
-  env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Snyk SAST Scan (Fail if High > 0)'
+    export SNYK_TOKEN=$(SNYK_TOKEN)
+    npx snyk test --org=40f7c43d-cfe9-4ea9-8927-b679655746c5 --severity-threshold=high
+  displayName: 'Snyk SCA Scan (Fail if High > 0)'
 
 
 # 🔹 🔍 SAST Scan (Code)
