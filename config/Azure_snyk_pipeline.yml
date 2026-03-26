@@ -47,14 +47,15 @@ steps:
 
 # 🔹 🔐 SCA Scan (Dependencies)
 - script: |
-    npx snyk test --severity-threshold=high
+    npx snyk code test --org=40f7c43d-cfe9-4ea9-8927-b679655746c5 --severity-threshold=high
   env:
     SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Snyk SCA Scan (Fail if High > 0)'
+  displayName: 'Snyk SAST Scan (Fail if High > 0)'
+
 
 # 🔹 🔍 SAST Scan (Code)
 - script: |
-    npx snyk code test --severity-threshold=high
+    npx snyk code test --org=40f7c43d-cfe9-4ea9-8927-b679655746c5 --severity-threshold=high
   env:
     SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Snyk SAST Scan (Fail if High > 0)'
@@ -66,14 +67,14 @@ steps:
 
 # 🔹 🐳 Container Scan
 - script: |
-    npx snyk container test $(IMAGE_NAME):latest --severity-threshold=high
+    npx snyk container test $(IMAGE_NAME):latest --org=40f7c43d-cfe9-4ea9-8927-b679655746c5 --severity-threshold=high
   env:
     SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Snyk Container Scan (Fail if High > 0)'
 
 # 🔹 📊 Publish Results to Snyk
 - script: |
-    npx snyk monitor
+    npx snyk monitor --org=40f7c43d-cfe9-4ea9-8927-b679655746c5
   env:
     SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Publish Results to Snyk'
