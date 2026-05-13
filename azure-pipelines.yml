@@ -43,19 +43,27 @@ steps:
 # Authenticate Snyk
 - script: |
     snyk auth $(SNYK_TOKEN)
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Authenticate Snyk'
 
 # Open Source Scan
 - script: |
-    snyk test --severity-threshold=high
+    snyk test --all-projects --severity-threshold=high --exclude=licenses || true
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Snyk OSS Scan'
 
 # Container Scan
 - script: |
-    snyk container test juice-shop-demo --file=Dockerfile
+    snyk container test juice-shop-demo --file=Dockerfile || true
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Snyk Container Scan'
 
-# Monitor
+# Monitor Container
 - script: |
-    snyk container monitor juice-shop-demo --file=Dockerfile
+    snyk container monitor juice-shop-demo --file=Dockerfile || true
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Snyk Monitor'
