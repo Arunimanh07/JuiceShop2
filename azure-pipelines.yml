@@ -19,12 +19,15 @@ steps:
     versionSpec: '20.x'
   displayName: 'Install Node.js'
 
-# Debug manifests
+# Debug repository structure
 - script: |
-    echo "Repository Structure"
+    echo "Current Directory:"
+    pwd
+
+    echo "Repository Structure:"
     find . -maxdepth 4
 
-    echo "Finding manifests..."
+    echo "Searching manifests..."
     find . -name "package.json"
     find . -name "Dockerfile"
     find . -name "*.tf"
@@ -35,27 +38,37 @@ steps:
 # Install dependencies
 - script: |
     npm install
-  displayName: 'Install dependencies'
+  displayName: 'Install Dependencies'
+
+# Install frontend dependencies if present
+- script: |
+    if [ -f "frontend/package.json" ]; then
+      cd frontend
+      npm install
+    else
+      echo "No frontend package.json found"
+    fi
+  displayName: 'Install Frontend Dependencies'
 
 # Build application
 - script: |
-    npm run build || echo "Skipping build"
-  displayName: 'Build application'
+    npm run build || echo "Skipping root build"
+
+    if [ -f "frontend/package.json" ]; then
+      cd frontend
+      npm run build || echo "Skipping frontend build"
+    fi
+  displayName: 'Build Application'
 
 # Verify Docker
 - script: |
     docker --version
   displayName: 'Check Docker'
 
-# Build Docker Image
-- script: |
-    docker build -t juice-shop-demo .
-  displayName: 'Build Docker Image'
-
 # Install Snyk CLI
 - script: |
     npm install -g snyk
-  displayName: 'Install Snyk'
+  displayName: 'Install Snyk CLI'
 
 # Authenticate Snyk
 - script: |
@@ -64,7 +77,9 @@ steps:
     SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Authenticate Snyk'
 
-# OSS Scan
+# =========================
+# OPEN SOURCE SCAN
+# =========================
 - script: |
     snyk test \
       --all-projects \
@@ -74,7 +89,7 @@ steps:
       || true
   env:
     SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Snyk OSS Scan'
+  displayName: 'Snyk Open Source Scan'
 
 # OSS Monitor
 - script: |
@@ -86,14 +101,34 @@ steps:
     SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Snyk OSS Monitor'
 
-# IaC Scan
+# =========================
+# SNYK CODE (SAST)
+# =========================
+- script: |
+    snyk code test || true
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
+  displayName: 'Snyk Code Scan'
+
+# =========================
+# IaC SCAN
+# =========================
 - script: |
     snyk iac test . || true
   env:
     SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Snyk IaC Scan'
 
-# Container Scan
+# =========================
+# BUILD DOCKER IMAGE
+# =========================
+- script: |
+    docker build -t juice-shop-demo .
+  displayName: 'Build Docker Image'
+
+# =========================
+# CONTAINER SCAN
+# =========================
 - script: |
     snyk container test juice-shop-demo --file=Dockerfile || true
   env:
