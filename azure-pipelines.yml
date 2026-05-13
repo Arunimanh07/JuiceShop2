@@ -25,38 +25,37 @@ steps:
     npm run build || echo "Skipping build"
   displayName: 'Build application'
 
-# Install Docker
-- task: DockerInstaller@0
-  inputs:
-    dockerVersion: 'latest'
+# Verify Docker
+- script: |
+    docker --version
+  displayName: 'Check Docker'
 
 # Build Docker Image
 - script: |
     docker build -t juice-shop-demo .
   displayName: 'Build Docker Image'
 
-# Install Snyk
+# Install Snyk CLI
 - script: |
     npm install -g snyk
-  displayName: 'Install Snyk CLI'
+  displayName: 'Install Snyk'
 
-# Snyk Open Source Scan
+# Authenticate Snyk
+- script: |
+    snyk auth $(SNYK_TOKEN)
+  displayName: 'Authenticate Snyk'
+
+# Open Source Scan
 - script: |
     snyk test --severity-threshold=high
-  env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Snyk Open Source Scan'
+  displayName: 'Snyk OSS Scan'
 
-# Snyk Container Scan
+# Container Scan
 - script: |
     snyk container test juice-shop-demo --file=Dockerfile
-  env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Snyk Container Scan'
 
-# Monitor Container
+# Monitor
 - script: |
     snyk container monitor juice-shop-demo --file=Dockerfile
-  env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Monitor Container'
+  displayName: 'Snyk Monitor'
