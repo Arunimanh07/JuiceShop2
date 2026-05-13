@@ -9,49 +9,54 @@ pool:
 
 steps:
 
-# 🔹 Install Node.js
+# Install Node.js
 - task: NodeTool@0
   inputs:
     versionSpec: '20.x'
   displayName: 'Install Node.js'
 
-# 🔹 Debug
-- script: |
-    ls -la
-  displayName: 'Debug: List root files'
-
-# 🔹 Install dependencies
+# Install dependencies
 - script: |
     npm install
-  displayName: 'Install root dependencies'
+  displayName: 'Install dependencies'
 
-# 🔹 Install frontend dependencies
+# Build application
 - script: |
-    if [ -d "frontend" ]; then
-      cd frontend
-      npm install
-    else
-      echo "No frontend folder found"
-    fi
-  displayName: 'Install frontend dependencies'
+    npm run build || echo "Skipping build"
+  displayName: 'Build application'
 
-# 🔹 Build frontend
+# Install Docker
+- task: DockerInstaller@0
+  inputs:
+    dockerVersion: 'latest'
+
+# Build Docker Image
 - script: |
-    npm run build:frontend || echo "Skipping frontend build"
-  displayName: 'Build frontend'
+    docker build -t juice-shop-demo .
+  displayName: 'Build Docker Image'
 
-# 🔹 Build backend
-- script: |
-    npm run build:server || echo "Skipping backend build"
-  displayName: 'Build backend'
-
-# 🔹 Run Snyk Test + Monitor (FIXED)
+# Install Snyk
 - script: |
     npm install -g snyk
+  displayName: 'Install Snyk CLI'
 
+# Snyk Open Source Scan
+- script: |
     snyk test --severity-threshold=high
-
-    snyk monitor
   env:
     SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Run Snyk Test & Monitor'
+  displayName: 'Snyk Open Source Scan'
+
+# Snyk Container Scan
+- script: |
+    snyk container test juice-shop-demo --file=Dockerfile
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
+  displayName: 'Snyk Container Scan'
+
+# Monitor Container
+- script: |
+    snyk container monitor juice-shop-demo --file=Dockerfile
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
+  displayName: 'Monitor Container'
