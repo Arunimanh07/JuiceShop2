@@ -9,11 +9,28 @@ pool:
 
 steps:
 
+# Checkout repository
+- checkout: self
+  fetchDepth: 0
+
 # Install Node.js
 - task: NodeTool@0
   inputs:
     versionSpec: '20.x'
   displayName: 'Install Node.js'
+
+# Debug manifests
+- script: |
+    echo "Repository Structure"
+    find . -maxdepth 4
+
+    echo "Finding manifests..."
+    find . -name "package.json"
+    find . -name "Dockerfile"
+    find . -name "*.tf"
+    find . -name "*.yaml"
+    find . -name "*.yml"
+  displayName: 'Debug Repository'
 
 # Install dependencies
 - script: |
@@ -47,12 +64,34 @@ steps:
     SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Authenticate Snyk'
 
-# Open Source Scan
+# OSS Scan
 - script: |
-    snyk test --all-projects --severity-threshold=high --exclude=licenses || true
+    snyk test \
+      --all-projects \
+      --detection-depth=5 \
+      --severity-threshold=high \
+      --exclude=licenses \
+      || true
   env:
     SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Snyk OSS Scan'
+
+# OSS Monitor
+- script: |
+    snyk monitor \
+      --all-projects \
+      --detection-depth=5 \
+      || true
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
+  displayName: 'Snyk OSS Monitor'
+
+# IaC Scan
+- script: |
+    snyk iac test . || true
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
+  displayName: 'Snyk IaC Scan'
 
 # Container Scan
 - script: |
@@ -61,9 +100,9 @@ steps:
     SNYK_TOKEN: $(SNYK_TOKEN)
   displayName: 'Snyk Container Scan'
 
-# Monitor Container
+# Container Monitor
 - script: |
     snyk container monitor juice-shop-demo --file=Dockerfile || true
   env:
     SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Snyk Monitor'
+  displayName: 'Snyk Container Monitor'
