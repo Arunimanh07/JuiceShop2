@@ -1,0 +1,56 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  CX_PROJECT: 'JuiceShop2'
+  CX_BRANCH: 'develop'
+
+steps:
+
+# Checkout source
+- checkout: self
+
+# Build (Example for .NET)
+- task: DotNetCoreCLI@2
+  displayName: 'Build Project'
+  inputs:
+    command: 'build'
+    projects: '**/*.csproj'
+
+# Checkmarx One Scan
+- task: CheckmarxAST@2
+  displayName: 'Checkmarx One Scan'
+  inputs:
+
+    serviceConnection: 'onetest_check_anu'
+
+    projectName: 'JuiceShop2)'
+
+    branchName: '$(develop)'
+
+    incremental: true
+
+    sast: true
+    sca: true
+    kics: true
+    apiSecurity: false
+
+    waitForScan: true
+
+    # ---------- Threshold ----------
+    vulnerabilityThreshold: |
+      High=0
+      Medium=0
+      Low=1
+
+    failBuild: true
+
+# Publish Report
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Scan Results'
+  inputs:
+    PathtoPublish: '$(Build.SourcesDirectory)'
+    ArtifactName: 'CxOneReport'
