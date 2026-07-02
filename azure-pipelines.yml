@@ -1,143 +1,56 @@
 trigger:
 - main
 
-pr:
-- main
-
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+  CX_PROJECT: 'JuiceShop2'
+  CX_BRANCH: 'develop'
+
 steps:
 
-# Checkout repository
+# Checkout source
 - checkout: self
-  fetchDepth: 0
 
-# Install Node.js
-- task: NodeTool@0
+# Build (Example for .NET)
+- task: DotNetCoreCLI@2
+  displayName: 'Build Project'
   inputs:
-    versionSpec: '20.x'
-  displayName: 'Install Node.js'
+    command: 'build'
+    projects: '**/*.csproj'
 
-# Debug repository structure
-- script: |
-    echo "Current Directory:"
-    pwd
+# Checkmarx One Scan
+- task: CheckmarxAST@2
+  displayName: 'Checkmarx One Scan'
+  inputs:
 
-    echo "Repository Structure:"
-    find . -maxdepth 4
+    serviceConnection: 'onetest_check_anu'
 
-    echo "Searching manifests..."
-    find . -name "package.json"
-    find . -name "Dockerfile"
-    find . -name "*.tf"
-    find . -name "*.yaml"
-    find . -name "*.yml"
-  displayName: 'Debug Repository'
+    projectName: 'JuiceShop2)'
 
-# Install dependencies
-- script: |
-    npm install
-  displayName: 'Install Dependencies'
+    branchName: '$(develop)'
 
-# Install frontend dependencies if present
-- script: |
-    if [ -f "frontend/package.json" ]; then
-      cd frontend
-      npm install
-    else
-      echo "No frontend package.json found"
-    fi
-  displayName: 'Install Frontend Dependencies'
+    incremental: true
 
-# Build application
-- script: |
-    npm run build || echo "Skipping root build"
+    sast: true
+    sca: true
+    kics: true
+    apiSecurity: false
 
-    if [ -f "frontend/package.json" ]; then
-      cd frontend
-      npm run build || echo "Skipping frontend build"
-    fi
-  displayName: 'Build Application'
+    waitForScan: true
 
-# Verify Docker
-- script: |
-    docker --version
-  displayName: 'Check Docker'
+    # ---------- Threshold ----------
+    vulnerabilityThreshold: |
+      High=0
+      Medium=0
+      Low=1
 
-# Install Snyk CLI
-- script: |
-    npm install -g snyk
-  displayName: 'Install Snyk CLI'
+    failBuild: true
 
-# Authenticate Snyk
-- script: |
-    snyk auth $(SNYK_TOKEN)
-  env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Authenticate Snyk'
-
-# =========================
-# OPEN SOURCE SCAN
-# =========================
-- script: |
-    snyk test \
-      --all-projects \
-      --detection-depth=5 \
-      --severity-threshold=high \
-      --exclude=licenses \
-      || true
-  env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Snyk Open Source Scan'
-
-# OSS Monitor
-- script: |
-    snyk monitor \
-      --all-projects \
-      --detection-depth=5 \
-      || true
-  env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Snyk OSS Monitor'
-
-# =========================
-# SNYK CODE (SAST)
-# =========================
-- script: |
-    snyk code test || true
-  env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Snyk Code Scan'
-
-# =========================
-# IaC SCAN
-# =========================
-- script: |
-    snyk iac test . || true
-  env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Snyk IaC Scan'
-
-# =========================
-# BUILD DOCKER IMAGE
-# =========================
-- script: |
-    docker build -t juice-shop-demo .
-  displayName: 'Build Docker Image'
-
-# =========================
-# CONTAINER SCAN
-# =========================
-- script: |
-    snyk container test juice-shop-demo --file=Dockerfile || true
-  env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Snyk Container Scan'
-
-# Container Monitor
-- script: |
-    snyk container monitor juice-shop-demo --file=Dockerfile || true
-  env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
-  displayName: 'Snyk Container Monitor'
+# Publish Report
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Scan Results'
+  inputs:
+    PathtoPublish: '$(Build.SourcesDirectory)'
+    ArtifactName: 'CxOneReport'
