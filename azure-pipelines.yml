@@ -1,4 +1,10 @@
 trigger:
+- task: Checkmarx AST@3
+  inputs:
+    CheckmarxService: 'onetest_check_anu'
+    projectName: 'JuiceShop2'
+    branchName: 'develop'
+    tenantName: 'cdac'
 - main
 
 pool:
