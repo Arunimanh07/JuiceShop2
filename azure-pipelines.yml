@@ -33,9 +33,9 @@ steps:
 
     serviceConnection: 'onetest_check_anu'
 
-    projectName: 'JuiceShop2)'
+    projectName: 'JuiceShop2'
 
-    branchName: '$(develop)'
+    branchName: 'develop'
 
     incremental: true
 
